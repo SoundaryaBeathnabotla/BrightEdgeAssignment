@@ -1,0 +1,10 @@
+[project]
+name = "brightedge-scale-crawler"
+version = "1.0.0"
+description = "BrightEdge engineering assessment: URL metadata crawler, topic classifier, and scale design."
+requires-python = ">=3.10"
+readme = "README.md"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
