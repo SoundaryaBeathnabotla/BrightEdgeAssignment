@@ -136,7 +136,13 @@ The AWS deployment path used for this project is Elastic Beanstalk with Docker. 
 Public deployment URL:
 
 ```text
-TODO: paste Elastic Beanstalk URL after deployment succeeds
+http://brightedge-crawler-prod.eba-pejbg5r3.us-east-1.elasticbeanstalk.com/
+```
+
+Public crawler example:
+
+```text
+http://brightedge-crawler-prod.eba-pejbg5r3.us-east-1.elasticbeanstalk.com/crawl?url=https%3A%2F%2Fexample.com
 ```
 
 ## AI Assistance Disclosure

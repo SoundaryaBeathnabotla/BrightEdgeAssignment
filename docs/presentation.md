@@ -42,6 +42,12 @@ Open:
 http://127.0.0.1:8000/
 ```
 
+Public Elastic Beanstalk demo:
+
+```text
+http://brightedge-crawler-prod.eba-pejbg5r3.us-east-1.elasticbeanstalk.com/
+```
+
 Operational endpoints:
 
 ```text

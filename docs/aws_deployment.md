@@ -302,6 +302,12 @@ After deployment, Elastic Beanstalk provides a domain such as:
 http://brightedge-crawler-prod.eba-xxxx.us-east-1.elasticbeanstalk.com
 ```
 
+Current public deployment:
+
+```text
+http://brightedge-crawler-prod.eba-pejbg5r3.us-east-1.elasticbeanstalk.com/
+```
+
 Open the clean UI:
 
 ```text
@@ -312,6 +318,12 @@ Test the crawler:
 
 ```text
 http://YOUR-ELASTIC-BEANSTALK-DOMAIN/crawl?url=https%3A%2F%2Fexample.com
+```
+
+Current public crawler example:
+
+```text
+http://brightedge-crawler-prod.eba-pejbg5r3.us-east-1.elasticbeanstalk.com/crawl?url=https%3A%2F%2Fexample.com
 ```
 
 Test the API:
