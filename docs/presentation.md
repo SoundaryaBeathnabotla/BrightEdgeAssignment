@@ -6,6 +6,8 @@ I built a dependency-light Python crawler service for the BrightEdge scale assig
 
 The implementation is intentionally easy to run and inspect. It uses the Python standard library for HTTP, HTML parsing, and serving the local API, so reviewers do not need to install a large framework just to evaluate the core logic.
 
+I also added backend controls that matter for real crawler services: SSRF protection, robots.txt checks, per-host polite throttling, structured crawl errors, request IDs, health/readiness endpoints, and an operational `/metrics` endpoint.
+
 ## 2. Assignment Coverage
 
 Part 1 is covered by the runnable crawler:
@@ -15,6 +17,7 @@ Part 1 is covered by the runnable crawler:
 - `app/classifier.py` classifies page type and topics using transparent heuristics.
 - `app/api.py` exposes a local API and clean browser UI.
 - `app/batch.py` processes a text file of URLs.
+- `app/metrics.py` tracks crawl counts, error counts, page-type counts, and latency percentiles.
 
 Part 2 is covered by the production design documentation:
 
@@ -39,6 +42,14 @@ Open:
 http://127.0.0.1:8000/
 ```
 
+Operational endpoints:
+
+```text
+http://127.0.0.1:8000/health
+http://127.0.0.1:8000/ready
+http://127.0.0.1:8000/metrics
+```
+
 Demo URLs:
 
 ```text
@@ -58,7 +69,7 @@ For AWS:
 - S3 stores monthly input, raw events, and body text.
 - Glue/EMR/Athena handle batch normalization and analytics.
 - SQS or MSK handles URL queues.
-- ECS/Fargate or App Runner runs crawler workers.
+- Elastic Beanstalk runs the public demo; ECS/Fargate or Batch would run crawler workers at production scale.
 - DynamoDB/OpenSearch/Aurora stores serving metadata depending on query patterns.
 - CloudWatch/OpenTelemetry/Prometheus track SLOs and operational health.
 

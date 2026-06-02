@@ -24,6 +24,16 @@ This submission includes a runnable URL metadata crawler, topic classifier, loca
 - Supports single-URL CLI, local API demo, and text-file batch processing.
 - Handles blocked sites cleanly with structured errors such as `blocked_by_origin`.
 
+## Advanced Backend Features
+
+- SSRF protection blocks private, loopback, link-local, multicast, reserved, and credentialed URLs.
+- Robots.txt checks report `robots_disallowed` when a site policy blocks crawling.
+- Per-host polite throttling reduces repeated hits to the same domain.
+- Structured errors distinguish timeout, DNS failure, origin blocking, robots policy, unsafe URL, and oversized response.
+- In-process operational metrics are exposed at `/metrics`.
+- Readiness and health endpoints are exposed at `/ready` and `/health`.
+- API responses include request IDs for traceability.
+
 ## Run Locally
 
 Requires Python 3.10+ and no third-party runtime dependencies.
@@ -54,6 +64,14 @@ Or open this browser-friendly URL:
 
 ```text
 http://127.0.0.1:8000/crawl?url=https%3A%2F%2Fexample.com
+```
+
+Operational endpoints:
+
+```text
+http://127.0.0.1:8000/health
+http://127.0.0.1:8000/ready
+http://127.0.0.1:8000/metrics
 ```
 
 Run a URL file:
@@ -113,7 +131,13 @@ See `docs/architecture.md`, `docs/schema.md`, and `docs/poc_release_plan.md` for
 
 ## Deployment
 
-The simplest AWS path is App Runner or Elastic Beanstalk. A `Dockerfile` and `Procfile` are included. See `docs/aws_deployment.md` for exact steps.
+The AWS deployment path used for this project is Elastic Beanstalk with Docker. A `Dockerfile`, `Procfile`, and Elastic Beanstalk deployment guide are included. See `docs/aws_deployment.md` for exact steps.
+
+Public deployment URL:
+
+```text
+TODO: paste Elastic Beanstalk URL after deployment succeeds
+```
 
 ## AI Assistance Disclosure
 

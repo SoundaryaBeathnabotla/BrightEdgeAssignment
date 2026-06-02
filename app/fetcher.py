@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import ipaddress
 import socket
+import threading
 import time
+import urllib.robotparser
 from urllib.error import HTTPError
 from dataclasses import dataclass
-from typing import Iterable
-from urllib.parse import urldefrag, urlparse
+from typing import ClassVar, Iterable
+from urllib.parse import urldefrag, urlparse, urlunparse
 from urllib.request import Request, urlopen
 
 from .models import FetchResult
@@ -34,9 +36,16 @@ class HttpFetcher:
         "BrightEdgeAssessmentCrawler/1.0"
     )
     allow_private_hosts: bool = False
+    respect_robots: bool = True
+    crawl_delay_seconds: float = 0.5
+    _host_last_fetch: ClassVar[dict[str, float]] = {}
+    _robots_cache: ClassVar[dict[str, tuple[float, urllib.robotparser.RobotFileParser | None]]] = {}
+    _lock: ClassVar[threading.Lock] = threading.Lock()
 
     def fetch(self, url: str) -> FetchResult:
         normalized = self._normalize_url(url)
+        self._enforce_robots(normalized)
+        self._throttle_host(normalized)
         request = Request(
             normalized,
             headers={
@@ -97,6 +106,50 @@ class HttpFetcher:
         if not self.allow_private_hosts:
             self._reject_private_host(parsed.hostname)
         return url
+
+    def _enforce_robots(self, url: str) -> None:
+        if not self.respect_robots:
+            return
+        parsed = urlparse(url)
+        robots = self._robots_for(parsed.scheme, parsed.netloc)
+        if robots is not None and not robots.can_fetch(self.user_agent, url):
+            raise FetchError(
+                "robots_disallowed",
+                "The target site's robots.txt policy disallows this crawler for the requested URL.",
+                retryable=False,
+            )
+
+    def _robots_for(self, scheme: str, netloc: str) -> urllib.robotparser.RobotFileParser | None:
+        key = f"{scheme}://{netloc}"
+        now = time.time()
+        with self._lock:
+            cached = self._robots_cache.get(key)
+            if cached and now - cached[0] < 3600:
+                return cached[1]
+
+        robots_url = urlunparse((scheme, netloc, "/robots.txt", "", "", ""))
+        parser = urllib.robotparser.RobotFileParser(robots_url)
+        try:
+            parser.read()
+        except Exception:
+            parser = None
+
+        with self._lock:
+            self._robots_cache[key] = (now, parser)
+        return parser
+
+    def _throttle_host(self, url: str) -> None:
+        parsed = urlparse(url)
+        host = parsed.netloc.lower()
+        if not host or self.crawl_delay_seconds <= 0:
+            return
+        with self._lock:
+            now = time.monotonic()
+            previous = self._host_last_fetch.get(host, 0.0)
+            wait_seconds = self.crawl_delay_seconds - (now - previous)
+            if wait_seconds > 0:
+                time.sleep(wait_seconds)
+            self._host_last_fetch[host] = time.monotonic()
 
     def _reject_private_host(self, host: str) -> None:
         try:

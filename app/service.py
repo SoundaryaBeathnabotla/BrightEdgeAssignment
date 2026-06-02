@@ -5,6 +5,7 @@ from __future__ import annotations
 from .classifier import TopicClassifier
 from .extractor import MetadataExtractor
 from .fetcher import FetchError, HttpFetcher
+from .metrics import metrics
 from .models import CrawlError, CrawlResponse
 
 
@@ -23,10 +24,13 @@ class CrawlerService:
         fetch = self.fetcher.fetch(url)
         metadata = self.extractor.extract(fetch)
         classification = self.classifier.classify(metadata)
-        return CrawlResponse(metadata=metadata, classification=classification)
+        response = CrawlResponse(metadata=metadata, classification=classification)
+        metrics.record_success(classification.page_type, metadata.crawl_ms)
+        return response
 
     def crawl_or_error(self, url: str) -> CrawlResponse | CrawlError:
         try:
             return self.crawl(url)
         except FetchError as exc:
+            metrics.record_error(exc.code)
             return CrawlError(code=exc.code, message=str(exc), retryable=exc.retryable)

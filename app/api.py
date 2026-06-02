@@ -15,11 +15,13 @@ import argparse
 from html import escape
 import json
 import os
+import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 from urllib.parse import parse_qs, urlparse
 
 from .models import CrawlError
+from .metrics import metrics
 from .service import CrawlerService
 
 MAX_REQUEST_BYTES = 16_384
@@ -91,6 +93,10 @@ class CrawlerRequestHandler(BaseHTTPRequestHandler):
             self._write_html(200, _render_home())
         elif self.path == "/health":
             self._write_json(200, {"status": "ok"})
+        elif self.path == "/ready":
+            self._write_json(200, {"status": "ready"})
+        elif self.path == "/metrics":
+            self._write_json(200, metrics.snapshot())
         elif self.path == "/schema":
             self._write_json(200, api_schema())
         elif parsed.path == "/crawl":
@@ -160,9 +166,11 @@ class CrawlerRequestHandler(BaseHTTPRequestHandler):
             return CrawlError("invalid_json", "Request body must be valid JSON")
 
     def _write_json(self, status: int, payload: dict[str, Any]) -> None:
+        payload = {"request_id": str(uuid.uuid4()), **payload}
         body = json.dumps(payload, ensure_ascii=True).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("X-Request-ID", payload["request_id"])
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)

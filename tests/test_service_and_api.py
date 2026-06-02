@@ -3,6 +3,7 @@ import unittest
 
 from app.api import api_schema
 from app.fetcher import FetchError, HttpFetcher
+from app.metrics import MetricsCollector
 from app.models import CrawlError, FetchResult
 from app.service import CrawlerService
 
@@ -48,6 +49,18 @@ class ServiceAndApiTest(unittest.TestCase):
 
         self.assertIn("crawl_request", encoded)
         self.assertIn("crawl_response", encoded)
+
+    def test_metrics_collector_records_success_and_error(self) -> None:
+        collector = MetricsCollector()
+
+        collector.record_success("news", 125)
+        collector.record_error("blocked_by_origin")
+        snapshot = collector.snapshot()
+
+        self.assertEqual(snapshot["counters"]["crawl_total"], 2)
+        self.assertEqual(snapshot["counters"]["crawl_success_total"], 1)
+        self.assertEqual(snapshot["counters"]["crawl_error_blocked_by_origin_total"], 1)
+        self.assertEqual(snapshot["latency_ms"]["p95"], 125)
 
     def test_fetcher_rejects_unsafe_urls(self) -> None:
         fetcher = HttpFetcher()
